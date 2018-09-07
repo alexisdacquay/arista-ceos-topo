@@ -1,0 +1,31 @@
+! Command: show running-config
+! device: rtr16 (cEOSSim, EOS-4.20.5F)
+!
+transceiver qsfp default-mode 4x10G
+!
+logging console informational
+logging monitor informational
+!
+hostname rtr16
+!
+spanning-tree mode mstp
+!
+no aaa root
+!
+interface Ethernet1
+   no switchport
+   ip address 10.6.16.16/24
+!
+interface Loopback0
+   ip address 16.16.16.16/32
+!
+ip routing
+!
+router bgp 500
+   router-id 16.16.16.16
+   distance bgp 20 200 5
+   neighbor 10.6.16.6 remote-as 200
+   network 16.16.16.16/32
+   network 10.6.16.0/24
+!
+end
