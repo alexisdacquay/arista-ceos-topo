@@ -1,0 +1,105 @@
+! Command: show running-config
+! device: rtr05 (cEOSSim, EOS-4.20.5F)
+!
+transceiver qsfp default-mode 4x10G
+!
+logging console informational
+logging monitor informational
+!
+hostname rtr05
+!
+spanning-tree mode mstp
+!
+no aaa root
+!
+interface Ethernet1
+   no switchport
+   ip address 10.0.35.5/24
+!
+interface Ethernet2
+   no switchport
+   ip address 10.0.45.5/24
+!
+interface Ethernet3
+   no switchport
+   ip address 10.0.56.5/24
+!
+interface Ethernet4
+   no switchport
+   ip address 10.0.57.5/24
+!
+interface Ethernet5
+   no switchport
+   ip address 10.0.111.5/24
+!
+interface Loopback0
+   ip address 5.5.5.5/32
+!
+ip routing
+!
+ip prefix-list PL_CUSTOMER_BLUE seq 10 permit 172.16.2.0/24 le 32
+ip prefix-list PL_CUSTOMER_RED seq 10 permit 172.16.1.0/24 le 32
+!
+route-map RM_IN permit 10
+   match ip address prefix-list PL_CUSTOMER_RED
+   set distance 120
+!
+route-map RM_IN permit 20
+   match ip address prefix-list PL_CUSTOMER_BLUE
+   set local-preference 200
+!
+route-map RM_IN permit 1000
+!
+route-map RM_OUT permit 10
+   match ip address prefix-list PL_CUSTOMER_RED
+!
+route-map RM_OUT permit 20
+   match ip address prefix-list PL_CUSTOMER_BLUE
+   set as-path prepend auto auto auto
+!
+route-map RM_REDIS_BGP_TO_OSPF permit 10
+   match ip address prefix-list PL_CUSTOMER_RED
+!
+route-map RM_REDIS_BGP_TO_OSPF permit 20
+   match ip address prefix-list PL_CUSTOMER_BLUE
+!
+route-map RM_REDIS_OSPF_TO_BGP permit 10
+   match ip address prefix-list PL_CUSTOMER_RED
+!
+route-map RM_REDIS_OSPF_TO_BGP permit 20
+   match ip address prefix-list PL_CUSTOMER_BLUE
+!
+router ospf 1
+   router-id 5.5.5.5
+   redistribute bgp route-map RM_REDIS_BGP_TO_OSPF
+   network 10.0.56.0/24 area 0.0.0.0
+   network 10.0.57.0/24 area 0.0.0.0
+   network 10.0.111.0/24 area 0.0.0.0
+   max-lsa 12000
+!
+router bgp 200
+   router-id 5.5.5.5
+   distance bgp 20 200 5
+   neighbor 10.0.35.3 remote-as 100
+   neighbor 10.0.35.3 route-map RM_IN in
+   neighbor 10.0.35.3 route-map RM_OUT out
+   neighbor 10.0.35.3 send-community extended
+   neighbor 10.0.35.3 maximum-routes 12000 
+   neighbor 10.0.45.4 remote-as 100
+   neighbor 10.0.45.4 route-map RM_IN in
+   neighbor 10.0.45.4 route-map RM_OUT out
+   neighbor 10.0.45.4 send-community extended
+   neighbor 10.0.45.4 maximum-routes 12000 
+   neighbor 10.0.56.6 remote-as 200
+   neighbor 10.0.56.6 maximum-routes 12000 
+   neighbor 10.0.57.7 remote-as 300
+   neighbor 10.0.57.7 shutdown
+   neighbor 10.0.57.7 maximum-routes 12000 
+   neighbor 10.0.111.11 remote-as 201
+   neighbor 10.0.111.11 shutdown
+   neighbor 10.0.111.11 maximum-routes 12000 
+   network 5.5.5.5/32
+   redistribute ospf route-map RM_REDIS_OSPF_TO_BGP
+   redistribute ospf match external route-map RM_REDIS_OSPF_TO_BGP
+!
+end

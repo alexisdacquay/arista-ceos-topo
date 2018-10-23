@@ -1,0 +1,55 @@
+! Command: show running-config
+! device: rtr14 (cEOSSim, EOS-4.20.5F)
+!
+transceiver qsfp default-mode 4x10G
+!
+logging console informational
+logging monitor informational
+!
+hostname rtr14
+!
+spanning-tree mode mstp
+!
+no aaa root
+!
+interface Ethernet1
+   no switchport
+   ip address 192.168.3.14/24
+!
+interface Ethernet2
+   no switchport
+   ip address 192.168.4.14/24
+!
+interface Loopback0
+   ip address 14.14.14.14/32
+!
+interface Loopback101
+   ip address 172.16.1.14/24
+!
+interface Loopback102
+   ip address 172.16.2.14/24
+!
+ip routing
+!
+ip prefix-list PL_CUSTOMER_BLUE seq 10 permit 172.16.2.0/24 le 32
+!
+route-map RM_OUT permit 10
+   match ip address prefix-list PL_CUSTOMER_BLUE
+   set as-path prepend auto auto
+!
+route-map RM_OUT permit 1000
+!
+router bgp 2000
+   router-id 14.14.14.14
+   distance bgp 20 200 5
+   neighbor 192.168.3.11 remote-as 201
+   neighbor 192.168.3.11 route-map RM_OUT out
+   neighbor 192.168.3.11 maximum-routes 12000 
+   neighbor 192.168.4.12 remote-as 301
+   neighbor 192.168.4.12 route-map RM_OUT out
+   neighbor 192.168.4.12 maximum-routes 12000 
+   network 14.14.14.14/32
+   network 172.16.1.0/24
+   network 172.16.2.0/24
+!
+end

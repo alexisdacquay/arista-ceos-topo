@@ -1,0 +1,44 @@
+! Command: show running-config
+! device: rtr11 (cEOSSim, EOS-4.20.5F)
+!
+transceiver qsfp default-mode 4x10G
+!
+logging console informational
+logging monitor informational
+!
+hostname rtr11
+!
+spanning-tree mode mstp
+!
+no aaa root
+!
+interface Ethernet1
+   no switchport
+   ip address 10.0.111.11/24
+!
+interface Ethernet2
+   no switchport
+   ip address 192.168.3.11/24
+!
+interface Loopback0
+   ip address 11.11.11.11/32
+!
+ip routing
+!
+router ospf 1
+   router-id 11.11.11.11
+   redistribute bgp
+   network 10.0.111.0/24 area 0.0.0.0
+   max-lsa 12000
+!
+router bgp 201
+   router-id 11.11.11.11
+   distance bgp 20 200 5
+   neighbor 10.0.111.5 remote-as 200
+   neighbor 10.0.111.5 shutdown
+   neighbor 10.0.111.5 maximum-routes 12000 
+   neighbor 192.168.3.14 remote-as 2000
+   neighbor 192.168.3.14 maximum-routes 12000 
+   network 11.11.11.11/32
+!
+end
